@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
         .AddFeatureFilter<PercentageFilter>()
-        .AddFeatureFilter<TimeWindowFilter>();
+        .AddFeatureFilter<TimeWindowFilter>()
+        .AddFeatureFilter<MyCustomFeatureFilter>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -31,7 +32,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", async (IFeatureManager manager) =>
 {
-    if (!await manager.IsEnabledAsync("WeatherForecastPercentage"))   //WeatherForecastTimeWindow
+    if (!await manager.IsEnabledAsync("WeatherForecastLuckyNumber"))   //WeatherForecastTimeWindow, WeatherForecastPercentage
     {        
         return Results.Content("not found");
     }
@@ -54,4 +55,21 @@ app.Run();
 record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
+
+
+[FilterAlias(nameof(MyCustomFeatureFilter))]
+public class MyCustomFeatureFilter : IFeatureFilter
+{
+    public Task<bool> EvaluateAsync(FeatureFilterEvaluationContext context)
+    {
+         var settings = context.Parameters.Get<MyCustomFeatureFilterSettings>()
+            ?? throw new ArgumentNullException(nameof(MyCustomFeatureFilterSettings));
+        return Task.FromResult(settings.LuckyNumber == 47);
+    }
+}
+
+public class MyCustomFeatureFilterSettings
+{
+    public int LuckyNumber { get; set; }
 }
