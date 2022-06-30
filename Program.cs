@@ -1,9 +1,12 @@
 using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.FeatureFilters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"));
+builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
+        .AddFeatureFilter<PercentageFilter>()
+        .AddFeatureFilter<TimeWindowFilter>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -28,7 +31,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", async (IFeatureManager manager) =>
 {
-    if (!await manager.IsEnabledAsync("WeatherForecast"))   
+    if (!await manager.IsEnabledAsync("WeatherForecastPercentage"))   //WeatherForecastTimeWindow
     {        
         return Results.Content("not found");
     }
